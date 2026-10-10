@@ -1,0 +1,15 @@
+field,description
+taxonomy,"XBRL taxonomy, such as us-gaap or dei"
+concept,XBRL concept/tag name
+label,SEC human-readable concept label
+description,SEC concept description
+unit,"Measurement unit, such as USD, shares, or USD/shares"
+value,Reported numeric value
+accn,SEC accession number for audit traceability
+form,SEC filing form
+filed,Date the fact was filed
+fy,Fiscal year reported by the filing
+fp,Fiscal period reported by the filing
+start,Period start for duration facts
+end,Period end or as-of date
+frame,SEC standardized period frame when available

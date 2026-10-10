@@ -1,0 +1,15 @@
+{
+  "dataset": "Apple Inc. (AAPL) SEC Financial Facts and Filings",
+  "ticker": "AAPL",
+  "cik": "0000320193",
+  "refreshed_at_utc": "2026-10-05T19:36:11.614262+00:00",
+  "financial_fact_rows": 25135,
+  "filing_rows": 1001,
+  "source": "U.S. Securities and Exchange Commission",
+  "source_urls": [
+    "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+    "https://data.sec.gov/submissions/CIK0000320193.json"
+  ],
+  "price_data_included": false,
+  "notes": "Reported SEC observations are retained with accession numbers; amendments and duplicate periods may be valid."
+}
