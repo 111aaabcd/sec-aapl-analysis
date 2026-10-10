@@ -1,36 +1,71 @@
+"""Clean Apple SEC companyfacts observations for analysis."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
 import pandas as pd
 
-# 1. 读取原始数据
-df = pd.read_csv("financial_facts.csv")
-print(f"原始数据行数：{len(df)}")
+ROOT = Path(__file__).resolve().parent
+RAW_PATH = ROOT / "financial_facts.csv"
+OUTPUT_PATH = ROOT / "aapl_filings_clean.csv"
 
-# 2. 保留核心分析字段，去掉冗余描述字段
-keep_cols = [
-    "concept", "unit", "value",
-    "accn", "form", "filed",
-    "fy", "fp", "start", "end", "frame"
+KEEP_COLUMNS = [
+    "taxonomy",
+    "concept",
+    "label",
+    "unit",
+    "value",
+    "accn",
+    "form",
+    "filed",
+    "fy",
+    "fp",
+    "start",
+    "end",
+    "frame",
 ]
-df = df[keep_cols]
+REQUIRED_COLUMNS = {"concept", "unit", "value", "accn", "form", "filed"}
+DATE_COLUMNS = ["filed", "start", "end"]
 
-# 3. 日期字段标准化
-df["filed"] = pd.to_datetime(df["filed"], errors="coerce")
-df["start"] = pd.to_datetime(df["start"], errors="coerce")
-df["end"] = pd.to_datetime(df["end"], errors="coerce")
 
-# 4. 去除空值与重复行
-df = df.dropna(subset=["value", "filed"])
-df = df.drop_duplicates()
-df['reportDate'] = df['reportDate'].fillna(df['filingDate'])
+def clean_facts(raw_path: Path = RAW_PATH) -> pd.DataFrame:
+    if not raw_path.exists():
+        raise FileNotFoundError(f"Required file not found: {raw_path}")
 
-# 5. 数值字段类型转换
-df["value"] = pd.to_numeric(df["value"], errors="coerce")
-df["fy"] = df["fy"].astype("Int64")
+    df = pd.read_csv(raw_path)
+    missing = REQUIRED_COLUMNS.difference(df.columns)
+    if missing:
+        raise ValueError(f"financial_facts.csv missing columns: {', '.join(sorted(missing))}")
 
-print(f"清洗后数据行数：{len(df)}")
-print(f"字段：{df.columns.tolist()}")
-print("\n清洗后前3行：")
-print(df.head(3))
+    available_columns = [column for column in KEEP_COLUMNS if column in df.columns]
+    clean = df[available_columns].copy()
 
-# 6. 输出清洗后的文件
-df.to_csv("aapl_filings_clean.csv", index=False, encoding="utf-8-sig")
-print("\n✅ 清洗完成，已输出：aapl_filings_clean.csv")
+    for column in DATE_COLUMNS:
+        if column in clean.columns:
+            clean[column] = pd.to_datetime(clean[column], errors="coerce")
+
+    clean["value"] = pd.to_numeric(clean["value"], errors="coerce")
+    if "fy" in clean.columns:
+        clean["fy"] = pd.to_numeric(clean["fy"], errors="coerce").astype("Int64")
+
+    clean = clean.dropna(subset=["concept", "unit", "value", "accn", "form", "filed"])
+    clean = clean.drop_duplicates()
+    sort_columns = [column for column in ["filed", "concept", "end", "accn"] if column in clean.columns]
+    clean = clean.sort_values(sort_columns, na_position="last").reset_index(drop=True)
+    return clean
+
+
+def main() -> None:
+    clean = clean_facts()
+    clean.to_csv(OUTPUT_PATH, index=False, encoding="utf-8-sig")
+    print(f"Raw rows: {len(pd.read_csv(RAW_PATH))}")
+    print(f"Clean rows: {len(clean)}")
+    print(f"Output: {OUTPUT_PATH.name}")
+    print("Columns:", clean.columns.tolist())
+    print("\nPreview:")
+    print(clean.head(3))
+
+
+if __name__ == "__main__":
+    main()
