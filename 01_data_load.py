@@ -1,18 +1,40 @@
-import pandas as pd
+"""Preview Apple SEC financial facts and company profile files."""
+
+from __future__ import annotations
+
 import json
+from pathlib import Path
 
-# 读取申报明细表（主表 financial_facts.csv）
-df_filings = pd.read_csv("financial_facts.csv")
-print("✅申报总条数：", len(df_filings))
-print("✅字段列表：", df_filings.columns.tolist())
-print("\n📋前3行预览：")
-print(df_filings.head(3))
+import pandas as pd
 
-#读取公司基础信息 json
-with open("company_profile.json", "r", encoding="utf-8") as f:
-    profile = json.load(f)
+ROOT = Path(__file__).resolve().parent
+FACTS_PATH = ROOT / "financial_facts.csv"
+PROFILE_PATH = ROOT / "company_profile.json"
 
-print("\n🏢苹果公司基础信息")
-print(f"公司名称：{profile['entityName']}")
-print(f"股票代码：{profile['ticker']}")
-print(f"行业编码&描述：{profile['sic']} | {profile['sicDescription']}")
+
+def require_file(path: Path) -> None:
+    if not path.exists():
+        raise FileNotFoundError(f"Required file not found: {path}")
+
+
+def main() -> None:
+    require_file(FACTS_PATH)
+    require_file(PROFILE_PATH)
+
+    facts = pd.read_csv(FACTS_PATH)
+    print("SEC financial facts rows:", len(facts))
+    print("Columns:", facts.columns.tolist())
+    print("\nPreview:")
+    print(facts.head(3))
+
+    with PROFILE_PATH.open("r", encoding="utf-8") as file:
+        profile = json.load(file)
+
+    print("\nApple company profile")
+    print(f"Company name: {profile.get('entityName', 'N/A')}")
+    print(f"Ticker: {profile.get('ticker', 'N/A')}")
+    print(f"SIC: {profile.get('sic', 'N/A')} | {profile.get('sicDescription', 'N/A')}")
+
+
+if __name__ == "__main__":
+    main()
